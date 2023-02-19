@@ -1,10 +1,11 @@
 use crate::prelude::*;
-const NUM_ROOMS: usize = 20;
 
+const NUM_ROOMS: usize = 20;
 pub struct MapBuilder {
     pub map : Map,
     pub rooms : Vec<Rect>,
     pub player_start : Point,
+    pub monsters : Vec<Point>
 }
 
 impl MapBuilder {
@@ -14,10 +15,12 @@ impl MapBuilder {
             map : Map::new(),
             rooms : Vec::new(),
             player_start : Point::zero(),
+            monsters : Vec::new()
         };
         mb.fill(TileType::Wall);
         mb.build_random_rooms(rng);
         mb.build_corridors(rng);
+        mb.spawn_monsters();
         mb.player_start = mb.rooms[0].center();
         mb
     }
@@ -42,9 +45,7 @@ impl MapBuilder {
             }
             if !overlap {
                 room.for_each(|p| {
-                    if p.x > 0 && p.x < SCREEN_WIDTH && p.y > 0 
-                        && p.y < SCREEN_HEIGHT 
-                    {
+                    if p.x > 0 && p.x < SCREEN_WIDTH && p.y > 0 && p.y < SCREEN_HEIGHT {
                         let idx = map_idx(p.x, p.y);
                         self.map.tiles[idx] = TileType::Floor;
                     }
@@ -88,6 +89,12 @@ impl MapBuilder {
                 self.apply_vertical_tunnel(prev.y, new.y, prev.x);
                 self.apply_horizontal_tunnel(prev.x, new.x, new.y);
             }
+        }
+    }
+
+    fn spawn_monsters(&mut self) {
+        for room in self.rooms.iter().skip(1) {
+            self.monsters.push(room.center())
         }
     }
 }
